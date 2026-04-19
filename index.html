@@ -50,12 +50,40 @@
     .stat .val { font-size: 14px; font-weight: bold; color: #fff; }
     #next-canvas { width: 100%; height: 30px; background: #000; border: 1px solid #333; }
 
+    /* ゲーム領域（中央） */
+    #game-area {
+      flex: 1;
+      width: 100%;
+      display: flex;
+      gap: 3px;
+      align-items: center;
+      justify-content: center;
+      min-height: 0;
+    }
+
+    /* 左ボタン */
+    #left-btn-area {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      flex-shrink: 0;
+    }
+    #left-btn-area button {
+      width: 40px;
+      padding: 8px 4px;
+      background: #16213e;
+      color: #fff;
+      border: 1px solid #4a4a6a;
+      border-radius: 4px;
+      font-size: 9px;
+      writing-mode: vertical-rl;
+      text-orientation: mixed;
+    }
+
     /* ゲーム画面（中央） */
     #game-wrapper {
       position: relative;
       flex: 1;
-      width: 100%;
-      max-width: 100%;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -65,7 +93,7 @@
       width: auto;
       height: auto;
       max-width: 100%;
-      max-height: 50vh; /* \u3055\u3089\u306b\u7e26\u3092\u7d5e\u308b */
+      max-height: 100%;
       aspect-ratio: 1 / 2;
       background: #000;
       border: 2px solid #333;
@@ -82,6 +110,25 @@
     #overlay h2 { font-size: 24px; }
     #overlay button { padding: 8px 16px; font-size: 14px; background: #3a3a6a; color: #fff; border: none; border-radius: 4px; }
 
+    /* 右ボタン */
+    #right-btn-area {
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+      flex-shrink: 0;
+    }
+    #right-btn-area button {
+      width: 40px;
+      padding: 8px 4px;
+      background: #16213e;
+      color: #fff;
+      border: 1px solid #4a4a6a;
+      border-radius: 4px;
+      font-size: 9px;
+      writing-mode: vertical-rl;
+      text-orientation: mixed;
+    }
+
     /* 操作パネル（下部） */
     #controls {
       width: 100%;
@@ -90,9 +137,6 @@
       gap: 3px;
       flex-shrink: 0;
     }
-    .row { display: flex; gap: 3px; }
-    .row button { flex: 1; padding: 6px; background: #16213e; color: #fff; border: 1px solid #4a4a6a; border-radius: 4px; font-size: 10px; }
-
     #touch-pad {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
@@ -119,10 +163,12 @@
       .stat h3 { font-size: 9px; }
       .stat .val { font-size: 18px; }
       #next-canvas { height: 100px; }
+      #game-area { flex-direction: column; width: 300px; height: 600px; gap: 8px; }
+      #left-btn-area { display: none; }
+      #right-btn-area { display: none; }
       #game-wrapper { width: 300px; height: 600px; }
       #game-canvas { max-width: 300px; max-height: 600px; }
       #controls { width: 140px; gap: 8px; }
-      .row button { padding: 10px; font-size: 12px; }
       #touch-pad { display: none; }
     }
   </style>
@@ -145,19 +191,29 @@
     </div>
   </div>
 
-  <div id="game-wrapper">
-    <canvas id="game-canvas" width="200" height="400"></canvas>
-    <div id="overlay">
-      <h2>TETRIS</h2>
-      <button id="start-btn">START</button>
+  <div id="game-area">
+    <!-- 左ボタン -->
+    <div id="left-btn-area">
+      <button id="pause-btn">PAUSE</button>
+    </div>
+
+    <!-- ゲーム画面 -->
+    <div id="game-wrapper">
+      <canvas id="game-canvas" width="200" height="400"></canvas>
+      <div id="overlay">
+        <h2>TETRIS</h2>
+        <button id="start-btn">START</button>
+      </div>
+    </div>
+
+    <!-- 右ボタン -->
+    <div id="right-btn-area">
+      <button id="quit-btn">QUIT</button>
     </div>
   </div>
 
+  <!-- 下部操作パネル -->
   <div id="controls">
-    <div class="row">
-      <button id="pause-btn">PAUSE</button>
-      <button id="quit-btn">QUIT</button>
-    </div>
     <div id="touch-pad">
       <button class="t-btn" id="l-btn">◀</button>
       <button class="t-btn" id="r-btn">↻</button>
