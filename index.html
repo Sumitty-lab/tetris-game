@@ -2,10 +2,11 @@
 <html lang="ja">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>テトリス - ブルーグリーン</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
+  <title>テトリス</title>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body { width: 100%; height: 100%; }
     body {
       background: #0d0d1a;
       color: #e0e0e0;
@@ -13,39 +14,58 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      min-height: 100vh;
-      padding: 10px;
-      overflow-x: hidden;
+      justify-content: center;
+      overflow: hidden;
       touch-action: none;
     }
 
-    /* モバイル向け上部一行レイアウトをデフォルトにする */
-    #layout-top {
+    #container {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding: 5px;
+      gap: 3px;
+    }
+
+    /* ステータスバー（上部） */
+    #status {
       display: flex;
       width: 100%;
-      max-width: 320px;
-      gap: 5px;
-      margin-bottom: 10px;
+      gap: 3px;
+      flex-shrink: 0;
     }
-    .stat-box {
+    .stat {
       flex: 1;
       background: #16213e;
       border: 1px solid #4a4a6a;
-      border-radius: 6px;
-      padding: 5px;
+      border-radius: 4px;
+      padding: 3px;
       text-align: center;
+      font-size: 10px;
     }
-    .stat-box h3 { font-size: 8px; color: #88a; text-transform: uppercase; margin-bottom: 2px; }
-    .stat-box .val { font-size: 16px; font-weight: bold; color: #fff; }
+    .stat h3 { font-size: 7px; color: #88a; text-transform: uppercase; margin-bottom: 1px; }
+    .stat .val { font-size: 14px; font-weight: bold; color: #fff; }
+    #next-canvas { width: 100%; height: 30px; background: #000; border: 1px solid #333; }
 
-    #main-game {
+    /* ゲーム画面（中央） */
+    #game-wrapper {
       position: relative;
+      flex: 1;
       width: 100%;
-      max-width: 320px;
+      max-width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 0;
     }
     #game-canvas {
-      width: 100%;
+      width: auto;
       height: auto;
+      max-width: 100%;
+      max-height: 50vh; /* \u3055\u3089\u306b\u7e26\u3092\u7d5e\u308b */
       aspect-ratio: 1 / 2;
       background: #000;
       border: 2px solid #333;
@@ -57,68 +77,78 @@
       top: 0; left: 0; width: 100%; height: 100%;
       background: rgba(0,0,0,0.85);
       display: flex; flex-direction: column; justify-content: center; align-items: center;
-      gap: 15px; z-index: 10;
+      gap: 10px; z-index: 10;
     }
-    #overlay button { padding: 12px 24px; font-size: 18px; background: #3a3a6a; color: #fff; border: none; border-radius: 6px; }
+    #overlay h2 { font-size: 24px; }
+    #overlay button { padding: 8px 16px; font-size: 14px; background: #3a3a6a; color: #fff; border: none; border-radius: 4px; }
 
+    /* 操作パネル（下部） */
     #controls {
       width: 100%;
-      max-width: 320px;
-      margin-top: 10px;
       display: flex;
       flex-direction: column;
-      gap: 10px;
+      gap: 3px;
+      flex-shrink: 0;
     }
-    .row { display: flex; gap: 8px; }
-    .row button { flex: 1; padding: 10px; background: #16213e; color: #fff; border: 1px solid #4a4a6a; border-radius: 6px; font-size: 12px; }
+    .row { display: flex; gap: 3px; }
+    .row button { flex: 1; padding: 6px; background: #16213e; color: #fff; border: 1px solid #4a4a6a; border-radius: 4px; font-size: 10px; }
 
     #touch-pad {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 8px;
+      gap: 3px;
+      width: 100%;
     }
     .t-btn {
-      padding: 18px;
+      padding: 8px;
       background: linear-gradient(135deg, #0055ff, #00ff55);
       border: none;
-      border-radius: 8px;
+      border-radius: 4px;
       color: #fff;
       font-weight: bold;
-      font-size: 18px;
+      font-size: 12px;
       display: flex; align-items: center; justify-content: center;
     }
 
-    /* PC表示用: 画面が広い場合のみ横並びにする */
+    /* PC表示 */
     @media screen and (min-width: 800px) {
-      body { flex-direction: row; justify-content: center; gap: 30px; padding-top: 40px; }
-      #layout-top { flex-direction: column; width: 140px; margin-bottom: 0; }
-      #main-game { width: 300px; }
-      #controls { width: 140px; margin-top: 0; }
+      body { justify-content: center; }
+      #container { width: 600px; height: auto; flex-direction: row; padding: 20px; gap: 20px; }
+      #status { flex-direction: column; width: 140px; gap: 8px; }
+      .stat { padding: 8px; font-size: 12px; }
+      .stat h3 { font-size: 9px; }
+      .stat .val { font-size: 18px; }
+      #next-canvas { height: 100px; }
+      #game-wrapper { width: 300px; height: 600px; }
+      #game-canvas { max-width: 300px; max-height: 600px; }
+      #controls { width: 140px; gap: 8px; }
+      .row button { padding: 10px; font-size: 12px; }
       #touch-pad { display: none; }
     }
   </style>
 </head>
 <body>
 
-  <div id="layout-top">
-    <div class="stat-box">
+<div id="container">
+  <div id="status">
+    <div class="stat">
       <h3>Score</h3>
       <div class="val" id="score">0</div>
     </div>
-    <div class="stat-box">
+    <div class="stat">
       <h3>Level</h3>
       <div class="val" id="level">1</div>
     </div>
-    <div class="stat-box">
+    <div class="stat">
       <h3>Next</h3>
-      <canvas id="next-canvas" width="60" height="40" style="display:block;margin:0 auto;"></canvas>
+      <canvas id="next-canvas"></canvas>
     </div>
   </div>
 
-  <div id="main-game">
-    <canvas id="game-canvas" width="300" height="600"></canvas>
+  <div id="game-wrapper">
+    <canvas id="game-canvas" width="200" height="400"></canvas>
     <div id="overlay">
-      <h2 style="font-size:32px;">TETRIS</h2>
+      <h2>TETRIS</h2>
       <button id="start-btn">START</button>
     </div>
   </div>
@@ -136,9 +166,10 @@
       <button class="t-btn" id="h-btn" style="grid-column: span 2;">DROP</button>
     </div>
   </div>
+</div>
 
 <script>
-const COLS = 10, ROWS = 20, BLOCK = 30;
+const COLS = 10, ROWS = 20, BLOCK = 20;
 const TETROMINOES = {
   I: { shape: [[0,0,0,0],[1,1,1,1],[0,0,0,0],[0,0,0,0]], color: {s:'#0055ff', e:'#00ff55'} },
   O: { shape: [[1,1],[1,1]], color: {s:'#0055ff', e:'#00ff55'} },
@@ -183,7 +214,7 @@ function drawBox(c, x, y, col, sz, a=1) {
   c.globalAlpha = a; const g = c.createLinearGradient(x*sz, y*sz, (x+1)*sz, (y+1)*sz); g.addColorStop(0, col.s); g.addColorStop(1, col.e); c.fillStyle = g; c.fillRect(x*sz+1, y*sz+1, sz-2, sz-2); c.globalAlpha = 1;
 }
 function draw() {
-  ctx.fillStyle = '#000'; ctx.fillRect(0,0,300,600);
+  ctx.fillStyle = '#000'; ctx.fillRect(0,0,COLS*BLOCK,ROWS*BLOCK);
   board.forEach((row, r) => row.forEach((v, c) => { if(v) drawBox(ctx, c, r, v, BLOCK); }));
   if(current) {
     let gy = 0; while(!collide(current, 0, gy+1)) gy++;
@@ -192,8 +223,8 @@ function draw() {
   }
 }
 function drawNext() {
-  nCtx.fillStyle = '#16213e'; nCtx.fillRect(0,0,60,40); if(!next) return;
-  const s = next.shape, sz = 8, ox = (60-s[0].length*sz)/2, oy = (40-s.length*sz)/2;
+  nCtx.fillStyle = '#16213e'; nCtx.fillRect(0,0,nCvs.width,nCvs.height); if(!next) return;
+  const s = next.shape, sz = 8, ox = (nCvs.width-s[0].length*sz)/2, oy = (nCvs.height-s.length*sz)/2;
   s.forEach((row, r) => row.forEach((v, ci) => { if(v) { const g = nCtx.createLinearGradient(ox+ci*sz, oy+r*sz, ox+(ci+1)*sz, oy+(r+1)*sz); g.addColorStop(0, next.color.s); g.addColorStop(1, next.color.e); nCtx.fillStyle = g; nCtx.fillRect(ox+ci*sz+1, oy+r*sz+1, sz-2, sz-2); } }));
 }
 function loop(t) {
@@ -202,13 +233,12 @@ function loop(t) {
   if(accum > Math.max(100, 1000-(level-1)*100)) {
     if(!collide(current, 0, 1)) current.y++; else {
       current.shape.forEach((row, r) => row.forEach((v, c) => { if(v) { let ny = current.y+r; if(ny<0) { running = false; } else board[ny][current.x+c] = current.color; } }));
-      if(!running) { showResult(); return; } clear(); spawn();
+      if(!running) { document.getElementById('overlay').style.display = 'flex'; document.getElementById('overlay').innerHTML = `<h2>GAME OVER</h2><p>Score: ${score}</p><button onclick="start()">RETRY</button>`; return; } clear(); spawn();
     }
     accum = 0;
   }
   draw(); timer = requestAnimationFrame(loop);
 }
-function showResult() { document.getElementById('overlay').style.display = 'flex'; document.getElementById('overlay').innerHTML = `<h2>GAME OVER</h2><p>Score: ${score}</p><button onclick="start()">RETRY</button>`; }
 function start() { init(); score = 0; level = 1; lines = 0; running = true; paused = false; document.getElementById('overlay').style.display = 'none'; document.getElementById('score').innerText = '0'; document.getElementById('level').innerText = '1'; spawn(); last = performance.now(); cancelAnimationFrame(timer); timer = requestAnimationFrame(loop); }
 document.getElementById('start-btn').onclick = start;
 document.getElementById('pause-btn').onclick = () => { paused = !paused; document.getElementById('pause-btn').innerText = paused ? 'RESUME' : 'PAUSE'; };
