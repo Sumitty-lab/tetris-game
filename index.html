@@ -17,18 +17,23 @@
       color: #e0e0e0;
       font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif;
       display: flex;
-      justify-content: center;
-      align-items: flex-start;
+      flex-direction: column;
+      justify-content: flex-start;
+      align-items: center;
       min-height: 100vh;
-      padding: 20px;
-      gap: 24px;
+      padding: 10px;
+      gap: 12px;
     }
 
     /* ===== メインレイアウト ===== */
     #game-wrapper {
       display: flex;
+      flex-direction: row;
       align-items: flex-start;
       gap: 24px;
+      width: 100%;
+      max-width: 1000px;
+      margin: 0 auto;
     }
 
     /* ===== ゲームキャンバス ===== */
@@ -37,6 +42,10 @@
       background: #0d0d1a;
       display: block;
       box-shadow: 0 0 20px rgba(100, 100, 255, 0.2);
+      width: 100%;
+      max-width: 300px;
+      height: auto;
+      aspect-ratio: 1 / 2;
     }
 
     /* ===== サイドパネル ===== */
@@ -45,6 +54,7 @@
       display: flex;
       flex-direction: column;
       gap: 20px;
+      flex-shrink: 0;
     }
 
     .panel-box {
@@ -187,6 +197,152 @@
     /* ===== キャンバスコンテナ ===== */
     #canvas-container {
       position: relative;
+      flex: 1;
+      min-width: 0;
+    }
+
+    /* ===== モバイルタッチコントローラー ===== */
+    #touch-controls {
+      display: none;
+      width: 100%;
+      max-width: 300px;
+      padding: 16px;
+      background: #16213e;
+      border: 1px solid #4a4a6a;
+      border-radius: 6px;
+      margin-top: 12px;
+    }
+
+    #touch-controls.show {
+      display: block;
+    }
+
+    .controls-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 8px;
+      justify-content: center;
+    }
+
+    .controls-row:last-child {
+      margin-bottom: 0;
+    }
+
+    .touch-btn {
+      flex: 1;
+      padding: 12px;
+      background: linear-gradient(135deg, #0066cc, #00cc66);
+      border: 1px solid #00ff99;
+      border-radius: 6px;
+      color: #ffffff;
+      font-size: 12px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.1s;
+      user-select: none;
+      -webkit-user-select: none;
+      touch-action: manipulation;
+    }
+
+    .touch-btn:active {
+      transform: scale(0.95);
+      opacity: 0.8;
+    }
+
+    .touch-btn.wide {
+      flex: 2;
+    }
+
+    /* ===== レスポンシブ ===== */
+    @media (max-width: 768px) {
+      body {
+        padding: 8px;
+        gap: 8px;
+      }
+
+      #game-wrapper {
+        flex-direction: column;
+        gap: 12px;
+      }
+
+      #side-panel {
+        width: 100%;
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 12px;
+      }
+
+      .panel-box {
+        flex: 1;
+        min-width: 140px;
+        padding: 10px;
+      }
+
+      .button-group {
+        flex-direction: row;
+        width: 100%;
+        gap: 6px;
+      }
+
+      #btn-restart, #btn-pause, #btn-quit {
+        flex: 1;
+        padding: 8px;
+        font-size: 12px;
+      }
+
+      #controls-box {
+        display: none;
+      }
+
+      #touch-controls {
+        display: block;
+        max-width: 100%;
+      }
+
+      #game-canvas {
+        max-width: 100%;
+      }
+
+      #next-canvas {
+        max-width: 100%;
+      }
+    }
+
+    @media (max-width: 480px) {
+      body {
+        padding: 6px;
+      }
+
+      #game-wrapper {
+        gap: 8px;
+      }
+
+      .panel-box {
+        min-width: 100px;
+        padding: 8px;
+      }
+
+      .panel-box h3 {
+        font-size: 10px;
+      }
+
+      .panel-box .value {
+        font-size: 20px;
+      }
+
+      .panel-box .sub-value {
+        font-size: 11px;
+      }
+
+      #btn-restart, #btn-pause, #btn-quit {
+        padding: 6px;
+        font-size: 11px;
+      }
+
+      .touch-btn {
+        padding: 10px;
+        font-size: 11px;
+      }
     }
   </style>
 </head>
@@ -245,6 +401,21 @@
   </div>
 </div>
 
+<!-- モバイルタッチコントローラー -->
+<div id="touch-controls">
+  <div class="controls-row">
+    <button class="touch-btn" id="touch-left">◀ 左</button>
+    <button class="touch-btn" id="touch-right">右 ▶</button>
+  </div>
+  <div class="controls-row">
+    <button class="touch-btn wide" id="touch-rotate">回転 ↻</button>
+  </div>
+  <div class="controls-row">
+    <button class="touch-btn" id="touch-soft-drop">▼ 落とす</button>
+    <button class="touch-btn" id="touch-hard-drop">▼▼ 一気</button>
+  </div>
+</div>
+
 <script>
 // ============================================================
 //  定数・設定
@@ -253,7 +424,7 @@ const COLS = 10;
 const ROWS = 20;
 const BLOCK = 30; // 1マスのピクセルサイズ
 
-// 各テトロミノの形状定義（4x4グリッド）
+// グラデーション対応のテトロミノ定義
 const TETROMINOES = {
   I: {
     shape: [
@@ -262,14 +433,14 @@ const TETROMINOES = {
       [0,0,0,0],
       [0,0,0,0]
     ],
-    color: '#00cfcf'
+    gradient: { start: '#0066cc', end: '#00ff99' }
   },
   O: {
     shape: [
       [1,1],
       [1,1]
     ],
-    color: '#cfcf00'
+    gradient: { start: '#0099ff', end: '#00ff66' }
   },
   T: {
     shape: [
@@ -277,7 +448,7 @@ const TETROMINOES = {
       [1,1,1],
       [0,0,0]
     ],
-    color: '#9f00cf'
+    gradient: { start: '#0077dd', end: '#00ff88' }
   },
   S: {
     shape: [
@@ -285,7 +456,7 @@ const TETROMINOES = {
       [1,1,0],
       [0,0,0]
     ],
-    color: '#00cf00'
+    gradient: { start: '#0088cc', end: '#00ffaa' }
   },
   Z: {
     shape: [
@@ -293,7 +464,7 @@ const TETROMINOES = {
       [0,1,1],
       [0,0,0]
     ],
-    color: '#cf0000'
+    gradient: { start: '#0055dd', end: '#00ff77' }
   },
   J: {
     shape: [
@@ -301,7 +472,7 @@ const TETROMINOES = {
       [1,1,1],
       [0,0,0]
     ],
-    color: '#0000cf'
+    gradient: { start: '#0066ff', end: '#00ffbb' }
   },
   L: {
     shape: [
@@ -309,7 +480,7 @@ const TETROMINOES = {
       [1,1,1],
       [0,0,0]
     ],
-    color: '#cf7f00'
+    gradient: { start: '#0044ee', end: '#00ff99' }
   }
 };
 
@@ -326,7 +497,7 @@ function getDropInterval(level) {
 // ============================================================
 //  ゲーム状態
 // ============================================================
-let board = [];          // 10x20 の盤面（0=空、色文字列=埋まり）
+let board = [];          // 10x20 の盤面（0=空、グラデーション情報=埋まり）
 let currentPiece = null; // 現在落下中のピース
 let nextPiece = null;    // 次のピース
 let score = 0;
@@ -363,7 +534,7 @@ function randomPiece() {
   const shape = def.shape.map(row => [...row]);
   return {
     shape,
-    color: def.color,
+    gradient: def.gradient,
     x: Math.floor((COLS - shape[0].length) / 2),
     y: 0
   };
@@ -429,7 +600,7 @@ function lockPiece(piece) {
         triggerGameOver();
         return;
       }
-      board[ny][nx] = piece.color;
+      board[ny][nx] = piece.gradient;
     }
   }
   clearLines();
@@ -533,12 +704,21 @@ function hideOverlay() {
 }
 
 // ============================================================
-//  描画
+//  描画（グラデーション対応）
 // ============================================================
-function drawBlock(ctx, x, y, color, alpha) {
+function drawBlock(ctx, x, y, gradient, alpha) {
   alpha = alpha === undefined ? 1 : alpha;
   ctx.globalAlpha = alpha;
-  ctx.fillStyle = color;
+
+  // グラデーション作成
+  const grd = ctx.createLinearGradient(
+    x * BLOCK, y * BLOCK,
+    x * BLOCK + BLOCK, y * BLOCK + BLOCK
+  );
+  grd.addColorStop(0, gradient.start);
+  grd.addColorStop(1, gradient.end);
+
+  ctx.fillStyle = grd;
   ctx.fillRect(x * BLOCK + 1, y * BLOCK + 1, BLOCK - 2, BLOCK - 2);
 
   // ハイライト（上・左）
@@ -587,7 +767,13 @@ function render() {
         const gy = currentPiece.y + r + ghostDrop;
         if (gy >= 0) {
           ctx.globalAlpha = 0.2;
-          ctx.fillStyle = currentPiece.color;
+          const grd = ctx.createLinearGradient(
+            gx * BLOCK, gy * BLOCK,
+            gx * BLOCK + BLOCK, gy * BLOCK + BLOCK
+          );
+          grd.addColorStop(0, currentPiece.gradient.start);
+          grd.addColorStop(1, currentPiece.gradient.end);
+          ctx.fillStyle = grd;
           ctx.fillRect(gx * BLOCK + 1, gy * BLOCK + 1, BLOCK - 2, BLOCK - 2);
           ctx.globalAlpha = 1;
         }
@@ -603,7 +789,7 @@ function render() {
         const bx = currentPiece.x + c;
         const by = currentPiece.y + r;
         if (by >= 0) {
-          drawBlock(ctx, bx, by, currentPiece.color);
+          drawBlock(ctx, bx, by, currentPiece.gradient);
         }
       }
     }
@@ -626,10 +812,15 @@ function drawNext() {
   for (let r = 0; r < rows; r++) {
     for (let c = 0; c < cols; c++) {
       if (!shape[r][c]) continue;
-      const px = offsetX / blockSize + c;
-      const py = offsetY / blockSize + r;
 
-      nextCtx.fillStyle = nextPiece.color;
+      const grd = nextCtx.createLinearGradient(
+        offsetX + c * blockSize, offsetY + r * blockSize,
+        offsetX + c * blockSize + blockSize, offsetY + r * blockSize + blockSize
+      );
+      grd.addColorStop(0, nextPiece.gradient.start);
+      grd.addColorStop(1, nextPiece.gradient.end);
+
+      nextCtx.fillStyle = grd;
       nextCtx.fillRect(
         offsetX + c * blockSize + 1,
         offsetY + r * blockSize + 1,
@@ -755,7 +946,6 @@ function quitGame() {
 function updateButtonStates() {
   const pauseBtn = document.getElementById('btn-pause');
   const quitBtn = document.getElementById('btn-quit');
-  const restartBtn = document.getElementById('btn-restart');
 
   if (!gameRunning) {
     pauseBtn.disabled = true;
@@ -854,6 +1044,49 @@ document.addEventListener('keydown', (e) => {
 });
 
 // ============================================================
+//  タッチ操作
+// ============================================================
+document.getElementById('touch-left').addEventListener('click', () => {
+  if (gameRunning && !gamePaused && !collides(currentPiece, -1, 0)) {
+    currentPiece.x--;
+    render();
+  }
+});
+
+document.getElementById('touch-right').addEventListener('click', () => {
+  if (gameRunning && !gamePaused && !collides(currentPiece, 1, 0)) {
+    currentPiece.x++;
+    render();
+  }
+});
+
+document.getElementById('touch-rotate').addEventListener('click', () => {
+  if (gameRunning && !gamePaused) {
+    tryRotate(currentPiece);
+    render();
+  }
+});
+
+document.getElementById('touch-soft-drop').addEventListener('click', () => {
+  if (gameRunning && !gamePaused) {
+    if (!collides(currentPiece, 0, 1)) {
+      currentPiece.y++;
+      score += 1;
+      updateUI();
+    } else {
+      lockPiece(currentPiece);
+    }
+    render();
+  }
+});
+
+document.getElementById('touch-hard-drop').addEventListener('click', () => {
+  if (gameRunning && !gamePaused) {
+    hardDrop();
+  }
+});
+
+// ============================================================
 //  ボタン操作
 // ============================================================
 document.getElementById('btn-restart').addEventListener('click', startGame);
@@ -867,6 +1100,19 @@ document.getElementById('btn-quit').addEventListener('click', quitGame);
 initBoard();
 render();
 updateButtonStates();
+
+// タッチコントローラーの表示判定
+function updateTouchControls() {
+  const touchControls = document.getElementById('touch-controls');
+  if (window.innerWidth <= 768) {
+    touchControls.classList.add('show');
+  } else {
+    touchControls.classList.remove('show');
+  }
+}
+
+window.addEventListener('resize', updateTouchControls);
+updateTouchControls();
 </script>
 </body>
 </html>
