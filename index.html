@@ -3,14 +3,13 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
-  <title>テトリス</title>
+  <title>テトリス - ブルーグリーン</title>
   <style>
-    /* ===== リセット & ベース ===== */
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body {
       background: #0d0d1a;
       color: #e0e0e0;
-      font-family: 'Segoe UI', Arial, sans-serif;
+      font-family: sans-serif;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -20,15 +19,15 @@
       touch-action: none;
     }
 
-    /* ===== 上部ステータスバー (全画面共通) ===== */
-    #status-bar {
+    /* モバイル向け上部一行レイアウトをデフォルトにする */
+    #layout-top {
       display: flex;
       width: 100%;
       max-width: 320px;
       gap: 5px;
       margin-bottom: 10px;
     }
-    .status-item {
+    .stat-box {
       flex: 1;
       background: #16213e;
       border: 1px solid #4a4a6a;
@@ -36,11 +35,10 @@
       padding: 5px;
       text-align: center;
     }
-    .status-item h3 { font-size: 9px; text-transform: uppercase; color: #8888aa; margin-bottom: 2px; }
-    .status-item .value { font-size: 16px; font-weight: bold; color: #ffffff; }
+    .stat-box h3 { font-size: 8px; color: #88a; text-transform: uppercase; margin-bottom: 2px; }
+    .stat-box .val { font-size: 16px; font-weight: bold; color: #fff; }
 
-    /* ===== メインゲームエリア ===== */
-    #game-wrapper {
+    #main-game {
       position: relative;
       width: 100%;
       max-width: 320px;
@@ -54,109 +52,88 @@
       display: block;
     }
 
-    /* ===== オーバーレイ ===== */
     #overlay {
       position: absolute;
       top: 0; left: 0; width: 100%; height: 100%;
       background: rgba(0,0,0,0.85);
       display: flex; flex-direction: column; justify-content: center; align-items: center;
-      gap: 15px; text-align: center; z-index: 10;
+      gap: 15px; z-index: 10;
     }
-    #overlay h2 { font-size: 28px; letter-spacing: 3px; }
-    #overlay button { padding: 12px 24px; font-size: 16px; background: #3a3a6a; border: 1px solid #6a6aaa; color: white; border-radius: 6px; cursor: pointer; }
+    #overlay button { padding: 12px 24px; font-size: 18px; background: #3a3a6a; color: #fff; border: none; border-radius: 6px; }
 
-    /* ===== 操作ボタン (下部) ===== */
-    #controls-container {
+    #controls {
       width: 100%;
       max-width: 320px;
       margin-top: 10px;
       display: flex;
       flex-direction: column;
-      gap: 8px;
+      gap: 10px;
     }
-    .btn-row { display: flex; gap: 8px; }
-    .btn-row button {
-      flex: 1;
-      padding: 12px;
-      background: #16213e;
-      border: 1px solid #4a4a6a;
-      color: white;
-      border-radius: 6px;
-      font-size: 12px;
-      cursor: pointer;
-    }
-    
-    /* タッチコントローラー */
+    .row { display: flex; gap: 8px; }
+    .row button { flex: 1; padding: 10px; background: #16213e; color: #fff; border: 1px solid #4a4a6a; border-radius: 6px; font-size: 12px; }
+
     #touch-pad {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      grid-template-rows: repeat(2, 1fr);
       gap: 8px;
-      margin-top: 10px;
     }
-    .touch-btn {
-      padding: 15px;
+    .t-btn {
+      padding: 18px;
       background: linear-gradient(135deg, #0055ff, #00ff55);
-      border: 1px solid #00ff99;
+      border: none;
       border-radius: 8px;
-      color: white;
+      color: #fff;
       font-weight: bold;
-      touch-action: manipulation;
+      font-size: 18px;
       display: flex; align-items: center; justify-content: center;
     }
-    .touch-btn:active { opacity: 0.7; }
 
-    /* PC表示用調整 */
-    @media screen and (min-width: 769px) {
-      body { flex-direction: row; justify-content: center; gap: 40px; padding-top: 50px; }
-      #status-bar { flex-direction: column; width: 150px; }
-      #game-wrapper { max-width: 300px; }
-      #controls-container { width: 150px; margin-top: 0; }
+    /* PC表示用: 画面が広い場合のみ横並びにする */
+    @media screen and (min-width: 800px) {
+      body { flex-direction: row; justify-content: center; gap: 30px; padding-top: 40px; }
+      #layout-top { flex-direction: column; width: 140px; margin-bottom: 0; }
+      #main-game { width: 300px; }
+      #controls { width: 140px; margin-top: 0; }
       #touch-pad { display: none; }
     }
   </style>
 </head>
 <body>
 
-  <!-- ステータスバー (スマホでは上、PCでは左) -->
-  <div id="status-bar">
-    <div class="status-item">
+  <div id="layout-top">
+    <div class="stat-box">
       <h3>Score</h3>
-      <div class="value" id="score">0</div>
+      <div class="val" id="score">0</div>
     </div>
-    <div class="status-item">
+    <div class="stat-box">
       <h3>Level</h3>
-      <div class="value" id="level">1</div>
+      <div class="val" id="level">1</div>
     </div>
-    <div class="status-item">
+    <div class="stat-box">
       <h3>Next</h3>
       <canvas id="next-canvas" width="60" height="40" style="display:block;margin:0 auto;"></canvas>
     </div>
   </div>
 
-  <!-- ゲーム本体 -->
-  <div id="game-wrapper">
+  <div id="main-game">
     <canvas id="game-canvas" width="300" height="600"></canvas>
     <div id="overlay">
-      <h2>TETRIS</h2>
-      <p style="color:#888;font-size:12px;">スマホはボタン、PCはキー操作</p>
-      <button id="btn-start">スタート</button>
+      <h2 style="font-size:32px;">TETRIS</h2>
+      <button id="start-btn">START</button>
     </div>
   </div>
 
-  <!-- 操作パネル (スマホでは下、PCでは右) -->
-  <div id="controls-container">
-    <div class="btn-row">
-      <button id="btn-pause">一時停止</button>
-      <button id="btn-quit">終了</button>
+  <div id="controls">
+    <div class="row">
+      <button id="pause-btn">PAUSE</button>
+      <button id="quit-btn">QUIT</button>
     </div>
-    
     <div id="touch-pad">
-      <button class="touch-btn" id="t-left">◀</button>
-      <button class="touch-btn" id="t-rotate">↻</button>
-      <button class="touch-btn" id="t-right">▶</button>
-      <button class="touch-btn" id="t-soft">▼</button>
-      <button class="touch-btn" id="t-hard" style="grid-column: span 2;">一気に落下</button>
+      <button class="t-btn" id="l-btn">◀</button>
+      <button class="t-btn" id="r-btn">↻</button>
+      <button class="t-btn" id="ri-btn">▶</button>
+      <button class="t-btn" id="d-btn">▼</button>
+      <button class="t-btn" id="h-btn" style="grid-column: span 2;">DROP</button>
     </div>
   </div>
 
@@ -172,168 +149,74 @@ const TETROMINOES = {
   L: { shape: [[0,0,1],[1,1,1],[0,0,0]], color: {s:'#0055ff', e:'#00ff55'} }
 };
 
-let board = [], currentPiece = null, nextPiece = null;
-let score = 0, level = 1, lines = 0, gameRunning = false, gamePaused = false;
-let dropTimer = null, lastTime = 0, dropAccum = 0;
+let board = [], current = null, next = null, score = 0, level = 1, lines = 0, running = false, paused = false, timer = null, last = 0, accum = 0;
+const cvs = document.getElementById('game-canvas'), ctx = cvs.getContext('2d'), nCvs = document.getElementById('next-canvas'), nCtx = nCvs.getContext('2d');
 
-const canvas = document.getElementById('game-canvas'), ctx = canvas.getContext('2d');
-const nextCanvas = document.getElementById('next-canvas'), ctxNext = nextCanvas.getContext('2d');
-
-function initBoard() { board = Array.from({length: ROWS}, () => Array(COLS).fill(0)); }
-function randomPiece() {
-  const keys = Object.keys(TETROMINOES);
-  const type = keys[Math.floor(Math.random() * keys.length)];
-  const def = TETROMINOES[type];
-  return { shape: def.shape.map(r => [...r]), color: def.color, x: Math.floor((COLS-def.shape[0].length)/2), y: 0 };
+function init() { board = Array.from({length: ROWS}, () => Array(COLS).fill(0)); }
+function getPiece() {
+  const k = Object.keys(TETROMINOES), t = k[Math.floor(Math.random() * k.length)], d = TETROMINOES[t];
+  return { shape: d.shape.map(r => [...r]), color: d.color, x: Math.floor((COLS-d.shape[0].length)/2), y: 0 };
 }
-
-function collides(p, ox, oy, shape) {
-  shape = shape || p.shape;
-  for(let r=0; r<shape.length; r++) {
-    for(let c=0; c<shape[r].length; c++) {
-      if(!shape[r][c]) continue;
-      let nx = p.x + c + ox, ny = p.y + r + oy;
-      if(nx<0 || nx>=COLS || ny>=ROWS) return true;
-      if(ny>=0 && board[ny][nx]) return true;
-    }
+function collide(p, ox, oy, s) {
+  s = s || p.shape;
+  for(let r=0; r<s.length; r++) for(let c=0; c<s[r].length; c++) {
+    if(!s[r][c]) continue;
+    let nx = p.x + c + ox, ny = p.y + r + oy;
+    if(nx<0 || nx>=COLS || ny>=ROWS || (ny>=0 && board[ny][nx])) return true;
   }
   return false;
 }
-
 function rotate(p) {
-  const s = p.shape, r = s.length, c = s[0].length;
-  const rotated = Array.from({length: c}, (_, ci) => Array.from({length: r}, (_, ri) => s[r-1-ri][ci]));
-  if(!collides(p, 0, 0, rotated)) p.shape = rotated;
+  const s = p.shape, r = s.length, c = s[0].length, rt = Array.from({length: c}, (_, ci) => Array.from({length: r}, (_, ri) => s[r-1-ri][ci]));
+  if(!collide(p, 0, 0, rt)) p.shape = rt;
 }
-
-function lock() {
-  currentPiece.shape.forEach((row, r) => {
-    row.forEach((v, c) => {
-      if(v) {
-        let ny = currentPiece.y + r;
-        if(ny < 0) { gameRunning = false; showResult(); return; }
-        board[ny][currentPiece.x + c] = currentPiece.color;
-      }
-    });
-  });
-  if(!gameRunning) return;
-  clearLines();
-  spawn();
+function clear() {
+  let c = 0;
+  for(let r=ROWS-1; r>=0; r--) if(board[r].every(v => v !== 0)) { board.splice(r, 1); board.unshift(Array(COLS).fill(0)); c++; r++; }
+  if(c > 0) { score += [0,100,300,500,800][c] * level; lines += c; level = Math.floor(lines/10)+1; document.getElementById('score').innerText = score; document.getElementById('level').innerText = level; }
 }
-
-function clearLines() {
-  let count = 0;
-  for(let r=ROWS-1; r>=0; r--) {
-    if(board[r].every(v => v !== 0)) { board.splice(r, 1); board.unshift(Array(COLS).fill(0)); count++; r++; }
-  }
-  if(count > 0) {
-    const pts = [0, 100, 300, 500, 800];
-    score += pts[count] * level;
-    lines += count;
-    level = Math.floor(lines / 10) + 1;
-    document.getElementById('score').textContent = score.toLocaleString();
-    document.getElementById('level').textContent = level;
-  }
-}
-
 function spawn() {
-  currentPiece = nextPiece || randomPiece();
-  nextPiece = randomPiece();
-  drawNext();
-  if(collides(currentPiece, 0, 0)) { gameRunning = false; showResult(); }
+  current = next || getPiece(); next = getPiece(); drawNext();
+  if(collide(current, 0, 0)) { running = false; document.getElementById('overlay').style.display = 'flex'; document.getElementById('overlay').innerHTML = `<h2>GAME OVER</h2><p>Score: ${score}</p><button onclick="start()">RETRY</button>`; }
 }
-
-function drawBlock(c, x, y, color, size, alpha=1) {
-  c.globalAlpha = alpha;
-  const g = c.createLinearGradient(x*size, y*size, (x+1)*size, (y+1)*size);
-  g.addColorStop(0, color.s); g.addColorStop(1, color.e);
-  c.fillStyle = g;
-  c.fillRect(x*size+1, y*size+1, size-2, size-2);
-  c.globalAlpha = 1;
+function drawBox(c, x, y, col, sz, a=1) {
+  c.globalAlpha = a; const g = c.createLinearGradient(x*sz, y*sz, (x+1)*sz, (y+1)*sz); g.addColorStop(0, col.s); g.addColorStop(1, col.e); c.fillStyle = g; c.fillRect(x*sz+1, y*sz+1, sz-2, sz-2); c.globalAlpha = 1;
 }
-
-function render() {
+function draw() {
   ctx.fillStyle = '#000'; ctx.fillRect(0,0,300,600);
-  board.forEach((row, r) => row.forEach((v, c) => { if(v) drawBlock(ctx, c, r, v, BLOCK); }));
-  if(currentPiece) {
-    let gy = 0; while(!collides(currentPiece, 0, gy+1)) gy++;
-    currentPiece.shape.forEach((row, r) => row.forEach((v, c) => {
-      if(v && currentPiece.y+r+gy >= 0) drawBlock(ctx, currentPiece.x+c, currentPiece.y+r+gy, currentPiece.color, BLOCK, 0.2);
-    }));
-    currentPiece.shape.forEach((row, r) => row.forEach((v, c) => {
-      if(v && currentPiece.y+r >= 0) drawBlock(ctx, currentPiece.x+c, currentPiece.y+r, currentPiece.color, BLOCK);
-    }));
+  board.forEach((row, r) => row.forEach((v, c) => { if(v) drawBox(ctx, c, r, v, BLOCK); }));
+  if(current) {
+    let gy = 0; while(!collide(current, 0, gy+1)) gy++;
+    current.shape.forEach((row, r) => row.forEach((v, c) => { if(v && current.y+r+gy >= 0) drawBox(ctx, current.x+c, current.y+r+gy, current.color, BLOCK, 0.2); }));
+    current.shape.forEach((row, r) => row.forEach((v, c) => { if(v && current.y+r >= 0) drawBox(ctx, current.x+c, current.y+r, current.color, BLOCK); }));
   }
 }
-
 function drawNext() {
-  ctxNext.fillStyle = '#16213e'; ctxNext.fillRect(0,0,60,40);
-  if(!nextPiece) return;
-  const s = nextPiece.shape, size = 8;
-  const ox = (60 - s[0].length*size)/2, oy = (40 - s.length*size)/2;
-  s.forEach((row, r) => row.forEach((v, ci) => {
-    if(v) {
-      const g = ctxNext.createLinearGradient(ox+ci*size, oy+r*size, ox+(ci+1)*size, oy+(r+1)*size);
-      g.addColorStop(0, nextPiece.color.s); g.addColorStop(1, nextPiece.color.e);
-      ctxNext.fillStyle = g; ctxNext.fillRect(ox+ci*size+1, oy+r*size+1, size-2, size-2);
+  nCtx.fillStyle = '#16213e'; nCtx.fillRect(0,0,60,40); if(!next) return;
+  const s = next.shape, sz = 8, ox = (60-s[0].length*sz)/2, oy = (40-s.length*sz)/2;
+  s.forEach((row, r) => row.forEach((v, ci) => { if(v) { const g = nCtx.createLinearGradient(ox+ci*sz, oy+r*sz, ox+(ci+1)*sz, oy+(r+1)*sz); g.addColorStop(0, next.color.s); g.addColorStop(1, next.color.e); nCtx.fillStyle = g; nCtx.fillRect(ox+ci*sz+1, oy+r*sz+1, sz-2, sz-2); } }));
+}
+function loop(t) {
+  if(!running || paused) { last = t; timer = requestAnimationFrame(loop); return; }
+  const d = t - last; last = t; accum += d;
+  if(accum > Math.max(100, 1000-(level-1)*100)) {
+    if(!collide(current, 0, 1)) current.y++; else {
+      current.shape.forEach((row, r) => row.forEach((v, c) => { if(v) { let ny = current.y+r; if(ny<0) { running = false; } else board[ny][current.x+c] = current.color; } }));
+      if(!running) { showResult(); return; } clear(); spawn();
     }
-  }));
-}
-
-function showResult() {
-  document.getElementById('overlay').style.display = 'flex';
-  document.getElementById('overlay').innerHTML = `<h2>GAME OVER</h2><p>Score: ${score}</p><button onclick="startGame()">再挑戦</button>`;
-}
-
-function gameLoop(t) {
-  if(!gameRunning || gamePaused) { lastTime = t; dropTimer = requestAnimationFrame(gameLoop); return; }
-  const delta = t - lastTime; lastTime = t; dropAccum += delta;
-  if(dropAccum > Math.max(100, 1000 - (level-1)*100)) {
-    if(!collides(currentPiece, 0, 1)) currentPiece.y++; else lock();
-    dropAccum = 0;
+    accum = 0;
   }
-  render();
-  dropTimer = requestAnimationFrame(gameLoop);
+  draw(); timer = requestAnimationFrame(loop);
 }
-
-function startGame() {
-  initBoard(); score = 0; level = 1; lines = 0; gameRunning = true; gamePaused = false;
-  document.getElementById('overlay').style.display = 'none';
-  document.getElementById('score').textContent = '0';
-  document.getElementById('level').textContent = '1';
-  spawn(); lastTime = performance.now();
-  cancelAnimationFrame(dropTimer); dropTimer = requestAnimationFrame(gameLoop);
-}
-
-function togglePause() {
-  gamePaused = !gamePaused;
-  document.getElementById('btn-pause').textContent = gamePaused ? '再開' : '一時停止';
-}
-
-document.getElementById('btn-start').onclick = startGame;
-document.getElementById('btn-pause').onclick = togglePause;
-document.getElementById('btn-quit').onclick = () => { gameRunning = false; location.reload(); };
-
-const move = (dx, dy) => { if(gameRunning && !gamePaused && !collides(currentPiece, dx, dy)) currentPiece.x += dx, currentPiece.y += dy; render(); };
-const rotateAction = () => { if(gameRunning && !gamePaused) rotate(currentPiece); render(); };
-const dropAction = () => { if(gameRunning && !gamePaused) { if(!collides(currentPiece, 0, 1)) currentPiece.y++; else lock(); } render(); };
-const hardDrop = () => { if(gameRunning && !gamePaused) { while(!collides(currentPiece, 0, 1)) currentPiece.y++; lock(); } render(); };
-
-document.addEventListener('keydown', e => {
-  if(e.code === 'ArrowLeft') move(-1, 0);
-  if(e.code === 'ArrowRight') move(1, 0);
-  if(e.code === 'ArrowDown') dropAction();
-  if(e.code === 'ArrowUp') rotateAction();
-  if(e.code === 'Space') e.preventDefault(), (gameRunning ? hardDrop() : startGame());
-});
-
-document.getElementById('t-left').onclick = () => move(-1, 0);
-document.getElementById('t-right').onclick = () => move(1, 0);
-document.getElementById('t-rotate').onclick = rotateAction;
-document.getElementById('t-soft').onclick = dropAction;
-document.getElementById('t-hard').onclick = hardDrop;
-
-render();
+function showResult() { document.getElementById('overlay').style.display = 'flex'; document.getElementById('overlay').innerHTML = `<h2>GAME OVER</h2><p>Score: ${score}</p><button onclick="start()">RETRY</button>`; }
+function start() { init(); score = 0; level = 1; lines = 0; running = true; paused = false; document.getElementById('overlay').style.display = 'none'; document.getElementById('score').innerText = '0'; document.getElementById('level').innerText = '1'; spawn(); last = performance.now(); cancelAnimationFrame(timer); timer = requestAnimationFrame(loop); }
+document.getElementById('start-btn').onclick = start;
+document.getElementById('pause-btn').onclick = () => { paused = !paused; document.getElementById('pause-btn').innerText = paused ? 'RESUME' : 'PAUSE'; };
+document.getElementById('quit-btn').onclick = () => { running = false; location.reload(); };
+const mv = (dx, dy) => { if(running && !paused && !collide(current, dx, dy)) current.x += dx, current.y += dy; draw(); };
+document.addEventListener('keydown', e => { if(e.code==='ArrowLeft') mv(-1,0); if(e.code==='ArrowRight') mv(1,0); if(e.code==='ArrowDown') mv(0,1); if(e.code==='ArrowUp') rotate(current); if(e.code==='Space') { e.preventDefault(); if(running) { while(!collide(current, 0, 1)) current.y++; mv(0,0); } else start(); } });
+document.getElementById('l-btn').onclick = () => mv(-1,0); document.getElementById('ri-btn').onclick = () => mv(1,0); document.getElementById('r-btn').onclick = () => rotate(current); document.getElementById('d-btn').onclick = () => mv(0,1); document.getElementById('h-btn').onclick = () => { while(!collide(current, 0, 1)) current.y++; mv(0,0); };
+draw();
 </script>
 </body>
 </html>
