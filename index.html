@@ -48,7 +48,7 @@
     }
     .stat h3 { font-size: 7px; color: #88a; text-transform: uppercase; margin-bottom: 1px; }
     .stat .val { font-size: 14px; font-weight: bold; color: #fff; }
-    #next-canvas { width: 100%; height: 30px; background: #000; border: 1px solid #333; }
+    #next-canvas { width: 100%; height: 60px; background: #000; border: 1px solid #333; }
 
     /* ゲーム領域（中央） */
     #game-area {
@@ -162,7 +162,7 @@
       .stat { padding: 8px; font-size: 12px; }
       .stat h3 { font-size: 9px; }
       .stat .val { font-size: 18px; }
-      #next-canvas { height: 100px; }
+      #next-canvas { height: 120px; }
       #game-area { flex-direction: column; width: 300px; height: 600px; gap: 8px; }
       #left-btn-area { display: flex; width: auto; }
       #right-btn-area { display: flex; width: auto; }
@@ -283,7 +283,7 @@ function draw() {
 }
 function drawNext() {
   nCtx.fillStyle = '#16213e'; nCtx.fillRect(0,0,nCvs.width,nCvs.height); if(!next) return;
-  const s = next.shape, sz = 8, ox = (nCvs.width-s[0].length*sz)/2, oy = (nCvs.height-s.length*sz)/2;
+  const s = next.shape, sz = 14, ox = (nCvs.width-s[0].length*sz)/2, oy = (nCvs.height-s.length*sz)/2;
   s.forEach((row, r) => row.forEach((v, ci) => { if(v) { const g = nCtx.createLinearGradient(ox+ci*sz, oy+r*sz, ox+(ci+1)*sz, oy+(r+1)*sz); g.addColorStop(0, next.color.s); g.addColorStop(1, next.color.e); nCtx.fillStyle = g; nCtx.fillRect(ox+ci*sz+1, oy+r*sz+1, sz-2, sz-2); } }));
 }
 function loop(t) {
