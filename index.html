@@ -424,7 +424,7 @@ const COLS = 10;
 const ROWS = 20;
 const BLOCK = 30; // 1マスのピクセルサイズ
 
-// グラデーション対応のテトロミノ定義
+// グラデーション対応のテトロミノ定義（全て統一したブルーグリーングラデーション）
 const TETROMINOES = {
   I: {
     shape: [
@@ -433,14 +433,14 @@ const TETROMINOES = {
       [0,0,0,0],
       [0,0,0,0]
     ],
-    gradient: { start: '#0066cc', end: '#00ff99' }
+    gradient: { start: '#0055ff', end: '#00ff55' }
   },
   O: {
     shape: [
       [1,1],
       [1,1]
     ],
-    gradient: { start: '#0099ff', end: '#00ff66' }
+    gradient: { start: '#0055ff', end: '#00ff55' }
   },
   T: {
     shape: [
@@ -448,7 +448,7 @@ const TETROMINOES = {
       [1,1,1],
       [0,0,0]
     ],
-    gradient: { start: '#0077dd', end: '#00ff88' }
+    gradient: { start: '#0055ff', end: '#00ff55' }
   },
   S: {
     shape: [
@@ -456,7 +456,7 @@ const TETROMINOES = {
       [1,1,0],
       [0,0,0]
     ],
-    gradient: { start: '#0088cc', end: '#00ffaa' }
+    gradient: { start: '#0055ff', end: '#00ff55' }
   },
   Z: {
     shape: [
@@ -464,7 +464,7 @@ const TETROMINOES = {
       [0,1,1],
       [0,0,0]
     ],
-    gradient: { start: '#0055dd', end: '#00ff77' }
+    gradient: { start: '#0055ff', end: '#00ff55' }
   },
   J: {
     shape: [
@@ -472,7 +472,7 @@ const TETROMINOES = {
       [1,1,1],
       [0,0,0]
     ],
-    gradient: { start: '#0066ff', end: '#00ffbb' }
+    gradient: { start: '#0055ff', end: '#00ff55' }
   },
   L: {
     shape: [
@@ -480,7 +480,7 @@ const TETROMINOES = {
       [1,1,1],
       [0,0,0]
     ],
-    gradient: { start: '#0044ee', end: '#00ff99' }
+    gradient: { start: '#0055ff', end: '#00ff55' }
   }
 };
 
