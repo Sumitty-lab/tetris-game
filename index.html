@@ -82,7 +82,13 @@
     }
 
     /* ===== ボタン ===== */
-    #btn-restart {
+    .button-group {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    #btn-restart, #btn-pause, #btn-quit {
       width: 100%;
       padding: 10px;
       background: #3a3a6a;
@@ -95,8 +101,26 @@
       letter-spacing: 0.05em;
     }
 
-    #btn-restart:hover {
+    #btn-restart:hover, #btn-pause:hover, #btn-quit:hover {
       background: #5a5a9a;
+    }
+
+    #btn-pause.paused {
+      background: #6a5a3a;
+      border-color: #aa8a6a;
+    }
+
+    #btn-pause.paused:hover {
+      background: #8a7a5a;
+    }
+
+    #btn-quit {
+      background: #6a3a3a;
+      border-color: #aa6a6a;
+    }
+
+    #btn-quit:hover {
+      background: #8a5a5a;
     }
 
     /* ===== 操作説明 ===== */
@@ -200,8 +224,12 @@
       <canvas id="next-canvas" width="120" height="80"></canvas>
     </div>
 
-    <!-- リスタートボタン -->
-    <button id="btn-restart">リスタート (R)</button>
+    <!-- ボタングループ -->
+    <div class="button-group">
+      <button id="btn-restart">リスタート (R)</button>
+      <button id="btn-pause">一時停止 (P)</button>
+      <button id="btn-quit">終了 (Q)</button>
+    </div>
 
     <!-- 操作説明 -->
     <div class="panel-box" id="controls-box">
@@ -306,6 +334,7 @@ let level = 1;
 let lines = 0;
 let gameRunning = false;
 let gameOver = false;
+let gamePaused = false;
 let dropTimer = null;
 let lastDropTime = 0;
 
@@ -622,7 +651,12 @@ let lastTime = 0;
 let dropAccum = 0;
 
 function gameLoop(timestamp) {
-  if (!gameRunning) return;
+  if (!gameRunning || gamePaused) {
+    if (gameRunning) {
+      dropTimer = requestAnimationFrame(gameLoop);
+    }
+    return;
+  }
 
   const delta = timestamp - lastTime;
   lastTime = timestamp;
@@ -656,7 +690,9 @@ function startGame() {
   lines = 0;
   gameOver = false;
   gameRunning = true;
+  gamePaused = false;
   updateUI();
+  updateButtonStates();
 
   nextPiece = randomPiece();
   spawnNext();
@@ -665,6 +701,77 @@ function startGame() {
   dropAccum = 0;
   cancelAnimationFrame(dropTimer);
   dropTimer = requestAnimationFrame(gameLoop);
+}
+
+// ============================================================
+//  一時停止・再開
+// ============================================================
+function togglePause() {
+  if (!gameRunning || gameOver) return;
+  gamePaused = !gamePaused;
+  updateButtonStates();
+  render();
+  if (gamePaused) {
+    showPauseOverlay();
+  } else {
+    hidePauseOverlay();
+    lastTime = 0; // タイマーをリセット
+    dropTimer = requestAnimationFrame(gameLoop);
+  }
+}
+
+function showPauseOverlay() {
+  const overlay = document.getElementById('overlay');
+  overlay.innerHTML = `
+    <h2>一時停止中</h2>
+    <p>Pキーまたはボタンで再開</p>
+    <button id="btn-resume">再開 (P)</button>
+  `;
+  overlay.style.display = 'flex';
+  document.getElementById('btn-resume').addEventListener('click', togglePause);
+}
+
+function hidePauseOverlay() {
+  document.getElementById('overlay').style.display = 'none';
+}
+
+// ============================================================
+//  ゲーム終了
+// ============================================================
+function quitGame() {
+  if (!gameRunning) return;
+  gameRunning = false;
+  gamePaused = false;
+  cancelAnimationFrame(dropTimer);
+  initBoard();
+  render();
+  showOverlay('TETRIS', 'スペースキーまたはボタンでスタート', 'ゲームスタート');
+  updateButtonStates();
+}
+
+// ============================================================
+//  ボタン状態更新
+// ============================================================
+function updateButtonStates() {
+  const pauseBtn = document.getElementById('btn-pause');
+  const quitBtn = document.getElementById('btn-quit');
+  const restartBtn = document.getElementById('btn-restart');
+
+  if (!gameRunning) {
+    pauseBtn.disabled = true;
+    quitBtn.disabled = true;
+    pauseBtn.classList.remove('paused');
+  } else {
+    pauseBtn.disabled = false;
+    quitBtn.disabled = false;
+    if (gamePaused) {
+      pauseBtn.classList.add('paused');
+      pauseBtn.textContent = '再開 (P)';
+    } else {
+      pauseBtn.classList.remove('paused');
+      pauseBtn.textContent = '一時停止 (P)';
+    }
+  }
 }
 
 // ============================================================
@@ -682,6 +789,21 @@ document.addEventListener('keydown', (e) => {
 
   if (!gameRunning) {
     if (e.code === 'KeyR') { startGame(); }
+    return;
+  }
+
+  // 一時停止中は操作を受け付けない（P、Q、Rキーは除く）
+  if (gamePaused) {
+    if (e.code === 'KeyP') {
+      e.preventDefault();
+      togglePause();
+    } else if (e.code === 'KeyQ') {
+      e.preventDefault();
+      quitGame();
+    } else if (e.code === 'KeyR') {
+      e.preventDefault();
+      startGame();
+    }
     return;
   }
 
@@ -716,7 +838,16 @@ document.addEventListener('keydown', (e) => {
       e.preventDefault();
       hardDrop();
       break;
+    case 'KeyP':
+      e.preventDefault();
+      togglePause();
+      break;
+    case 'KeyQ':
+      e.preventDefault();
+      quitGame();
+      break;
     case 'KeyR':
+      e.preventDefault();
       startGame();
       break;
   }
@@ -727,12 +858,15 @@ document.addEventListener('keydown', (e) => {
 // ============================================================
 document.getElementById('btn-restart').addEventListener('click', startGame);
 document.getElementById('btn-start').addEventListener('click', startGame);
+document.getElementById('btn-pause').addEventListener('click', togglePause);
+document.getElementById('btn-quit').addEventListener('click', quitGame);
 
 // ============================================================
 //  初期描画
 // ============================================================
 initBoard();
 render();
+updateButtonStates();
 </script>
 </body>
 </html>
